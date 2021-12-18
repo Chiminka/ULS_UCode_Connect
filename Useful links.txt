@@ -1,3 +1,4 @@
 Links for developing:
 
 1) https://iq.opengenus.org/ls-command-in-c/ - One of exemples of realization ls util for Linux
+2) https://www.opennet.ru/man.shtml?topic=getpwuid&category=3&russian=0 - для оболочки
