@@ -1,0 +1,3 @@
+Links for developing:
+
+1) https://iq.opengenus.org/ls-command-in-c/ - One of exemples of realization ls util for Linux
