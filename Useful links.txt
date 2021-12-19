@@ -3,3 +3,6 @@ Links for developing:
 1) https://iq.opengenus.org/ls-command-in-c/ - One of exemples of realization ls util for Linux
 2) https://www.opennet.ru/man.shtml?topic=getpwuid&category=3&russian=0 - для оболочки
 3) https://code.woboq.org/userspace/glibc/stdlib/getenv.c.html - если нужно будет убирать библиотеки для getenv
+4) https://www.go4expert.com/articles/developing-linux-utility-part-iii-t27451/ - 1 часть базы
+5) https://www.go4expert.com/articles/developing-linux-utility-part-ii-t27431/ - 2 часть базы
+6) https://www.go4expert.com/articles/developing-linux-utility-ls-c-t27426/ - 3 часть базы с -l
