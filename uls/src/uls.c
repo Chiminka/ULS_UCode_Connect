@@ -552,10 +552,10 @@ int main(int argc, char *argv[])
     if (argc > 1)
     {
         int count = 1;
-        int count2 = 0;
+        //int count2 = 0;
         while (count != argc)
         {
-            char *files[100];
+            //const char *files[argc];
             if (mx_strstr(argv[count], "-") == 0)
             {
                 char *curr_dir = NULL;
@@ -596,22 +596,21 @@ int main(int argc, char *argv[])
 
                     if (!S_ISDIR(st.st_mode))
                     {
-                        mx_strcpy(*files, argv[count]);
-                        mx_strcpy(*files, " ");                        
+                        mx_printstr("hello\n");
                     }
                     else {
                         /*dir into mas*/
-                    }         
+                    }
                 }
             }
             count++;
             if (count == argc) {
-                mx_printstr(*files);
+                //mx_printstr(*files);
                 return 0;
             }
         }
 
-        /*        write(1, argv[count], mx_strlen(argv[count]));
+        /*  write(1, argv[count], mx_strlen(argv[count]));
             write(1, "\n", 1);*/
         char *s = malloc(argc * 2);
 
