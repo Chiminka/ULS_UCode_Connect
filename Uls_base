@@ -1,72 +1,4 @@
-#include <stdio.h>
-#include <string.h>
-#include <sys/types.h>
-#include <dirent.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
-#include <pwd.h>
-#include <errno.h>
-#include <grp.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <fcntl.h>
-#include <time.h>
-
-typedef __uint16_t _uint16_t;
-
-void mx_printint(int n);
-
-char *mx_getenv(const char *name)
-{
-    size_t len = strlen(name);
-    char **ep;
-    _uint16_t name_start;
-    if (__environ == NULL || name[0] == '\0')
-        return NULL;
-    if (name[1] == '\0')
-    {
-        /* The name of the variable consists of only one character.  Therefore
-         the first two characters of the environment entry are this character
-         and a '=' character.  */
-#if __BYTE_ORDER == 1234 || !_STRING_ARCH_unaligned
-        name_start = ('=' << 8) | *(const unsigned char *)name;
-#else
-        name_start = '=' | ((*(const unsigned char *)name) << 8);
-#endif
-        for (ep = __environ; *ep != NULL; ++ep)
-        {
-#if _STRING_ARCH_unaligned
-            _uint16_t ep_start = *(uint16_t *)*ep;
-#else
-            _uint16_t ep_start = (((unsigned char *)*ep)[0] | (((unsigned char *)*ep)[1] << 8));
-#endif
-            if (name_start == ep_start)
-                return &(*ep)[2];
-        }
-    }
-    else
-    {
-#if _STRING_ARCH_unaligned
-        name_start = *(const uint16_t *)name;
-#else
-        name_start = (((const unsigned char *)name)[0] | (((const unsigned char *)name)[1] << 8));
-#endif
-        len -= 2;
-        name += 2;
-        for (ep = __environ; *ep != NULL; ++ep)
-        {
-#if _STRING_ARCH_unaligned
-            _uint16_t ep_start = *(uint16_t *)*ep;
-#else
-            _uint16_t ep_start = (((unsigned char *)*ep)[0] | (((unsigned char *)*ep)[1] << 8));
-#endif
-            if (name_start == ep_start && !strncmp(*ep + 2, name, len) && (*ep)[len + 2] == '=')
-                return &(*ep)[len + 3];
-        }
-    }
-    return NULL;
-}
+#include "../inc/uls.h"
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -83,24 +15,24 @@ int mx_flag_l(void)
     char *curr_dir = NULL;
     DIR *dp = NULL;
     struct dirent *dptr = NULL;
-    unsigned int count = 0;
+    int count = 0;
     long *ptr = NULL;
     struct winsize w;
 
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
 
-    curr_dir = mx_getenv("PWD");
+    curr_dir = "./";
 
     if (NULL == curr_dir)
     {
-        perror("\n ERROR : Could not get the working directory\n");
+        write(2, "ERROR : Could not get the working directory\n", mx_strlen("ERROR : Could not get the working directory\n"));
         return -1;
     }
 
     int num_files = 0;
     dp = opendir((const char *)curr_dir);
 
-    while ((dptr = readdir(dp))!= NULL)
+    while ((dptr = readdir(dp)) != NULL)
     {
         if (dptr->d_name[0] != '.')
             num_files++;
@@ -119,24 +51,24 @@ int mx_flag_l(void)
         ptr = malloc(num_files * 8);
         if (NULL == ptr)
         {
-            perror("\n Memory allocation failed\n");
+            write(2, "Memory allocation failed\n", mx_strlen("Memory allocation failed\n"));
             return -1;
         }
         else
         {
-            memset(ptr, 0, num_files * 8);
+            mx_memset(ptr, 0, num_files * 8);
         }
     }
 
     dp = opendir((const char *)curr_dir);
     if (dp == NULL)
     {
-        perror("\n ERROR : Could not open the working directory\n");
+        write(2, "ERROR : Could not open the working directory\n", mx_strlen("ERROR : Could not open the working directory\n"));
         free(ptr);
         return -1;
     }
 
-    unsigned int j = 0;
+    int j = 0;
     for (count = 0; (dptr = readdir(dp)) != NULL; count++)
     {
         if (dptr->d_name[0] != '.')
@@ -205,22 +137,13 @@ int mx_flag_l(void)
 
     for (count = 0; count < num_files; count++)
     {
-        int fd = -1;
         struct stat st;
-
-        /*if (opendir((char *)ptr[count]) == NULL)
-        {
-            perror("\n Opening file/Directory failed\n");
-            free(ptr);
-            return -1;
-        }*/
-        close(fd);
 
         // Вызовите stat, чтобы получить статистическую информацию о файле
         if (stat((char *)ptr[count], &st))
         {
             // If stat() fails
-            perror("\n Stat() failed\n");
+            write(2, "Stat() failed\n", mx_strlen("Stat() failed\n"));
             free(ptr);
             return -1;
         }
@@ -288,12 +211,14 @@ int mx_flag_l(void)
         }
         else
         {
-            write(1, "-", 1);;
+            write(1, "-", 1);
+            ;
         }
 
         if (permission & S_IXGRP)
         {
-            write(1, "x", 1);;
+            write(1, "x", 1);
+            ;
         }
         else
         {
@@ -329,35 +254,56 @@ int mx_flag_l(void)
         }
         else
         {
-           write(1, "-", 1);
+            write(1, "-", 1);
         }
-////////////////////////////////////////////////////// поменять на принтинт
 
         // Вывести количество жестких ссылок
-        printf(" %d ", (int)st.st_nlink);
+        write(1, " ", 1);
+        mx_printint((int)st.st_nlink);
+        write(1, " ", 1);
 
         // Get the user name
         struct passwd *pt = getpwuid(st.st_uid);
-        write(1, pt->pw_name, strlen(pt->pw_name));
+        write(1, pt->pw_name, mx_strlen(pt->pw_name));
         write(1, " ", 1);
 
         // Get the group name
         struct group *p = getgrgid(st.st_gid);
-        write(1, p->gr_name, strlen(p->gr_name));
-        write(1, " ", 1);
+        write(1, p->gr_name, mx_strlen(p->gr_name));
+
+        /* int len = 0, tmp = 0;
+         int n = (long long)st.st_size;
+         if (n / 10 == 0) len = 1;
+         else
+         {
+             while (n > 0)
+             {
+                 n = n / 10;
+                 len += 1;
+             }
+         }
+
+         if (len > tmp) {
+             write(1, " ", 1);
+         }
+         else
+             write(1, "  ", 2);
+         tmp = len;*/
 
         // Get the file size
-        printf("%lld ", (long long)st.st_size);
+        write(1, " ", 1);
+        mx_printint((long long)st.st_size);
+        write(1, " ", 1);
 
         // Получение даты и времени
         // Обратите внимание, что здесь применяется некоторая логика
         // для удаления завершающего символа новой строки
         char date_time[100];
 
-        memset(date_time, 0, sizeof(date_time));
+        mx_memset(date_time, 0, sizeof(date_time));
 
-        strncpy(date_time, ctime(&st.st_ctime), sizeof(date_time));
-        
+        mx_strncpy(date_time, ctime(&st.st_ctime), sizeof(date_time));
+
         int c = 0;
         while (date_time[c] != '\0')
         {
@@ -365,28 +311,27 @@ int mx_flag_l(void)
                 date_time[c] = '\0';
             c++;
         }
-        write(1, date_time, strlen(date_time));
+        write(1, date_time, mx_strlen(date_time));
         write(1, " ", 1);
 
         if (!file_exist((char *)ptr[count]))
         {
             if (S_ISDIR(st.st_mode))
             {
-                write (1, (char *)ptr[count], strlen((char *)ptr[count]));
-                write (1, "\n", 2);       
+                write(1, (char *)ptr[count], mx_strlen((char *)ptr[count]));
+                write(1, "\n", 1);
             }
             else
             {
-                write (1, (char *)ptr[count], strlen((char *)ptr[count]));
-                write (1, "\n", 2); 
+                write(1, (char *)ptr[count], mx_strlen((char *)ptr[count]));
+                write(1, "\n", 1);
             }
         }
         else
         {
-            write(1, (char *)ptr[count], strlen((char *)ptr[count]));
-            write (1, "\n", 2); 
+            mx_printstr((char *)ptr[count]);
+            write(1, "\n", 1);
         }
-        close(fd);
     }
 
     free(ptr);
@@ -405,12 +350,12 @@ int mx_no_flags(void)
     //чтобы получить количество строк и столбцов, видимых на терминале
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
 
-    // Получите переменную среды PWD, чтобы получить текущий рабочий каталог
-    curr_dir = mx_getenv("PWD");
+    // Получить текущий рабочий каталог
+    curr_dir = "./";
 
     if (NULL == curr_dir)
     {
-        perror("\n ERROR : Could not get the working directory\n");
+        write(2, "ERROR : Could not get the working directory\n", mx_strlen("ERROR : Could not get the working directory\n"));
         return -1;
     }
 
@@ -421,7 +366,7 @@ int mx_no_flags(void)
     dp = opendir((const char *)curr_dir);
 
     // Start reading the directory contents
-    while (NULL != (dptr = readdir(dp)))
+    while ((dptr = readdir(dp)) != NULL)
     {
         // Не считайте файлы, начинающиеся с "."
         if (dptr->d_name[0] != '.')
@@ -452,13 +397,13 @@ int mx_no_flags(void)
         ptr = malloc(num_files * 8);
         if (NULL == ptr)
         {
-            perror("\n Memory allocation failed\n");
+            write(2, "Memory allocation failed\n", mx_strlen("Memory allocation failed\n"));
             return -1;
         }
         else
         {
             // Инициализировать память нулями
-            memset(ptr, 0, num_files * 8);
+            mx_memset(ptr, 0, num_files * 8);
         }
     }
 
@@ -467,7 +412,7 @@ int mx_no_flags(void)
 
     if (NULL == dp)
     {
-        perror("\n ERROR : Could not open the working directory\n");
+        write(2, "ERROR : Could not open the working directory\n", mx_strlen("ERROR : Could not open the working directory\n"));
         free(ptr);
         return -1;
     }
@@ -487,9 +432,9 @@ int mx_no_flags(void)
 
     // Начните сортировать имена в алфавитном порядке
     // Используя пузырьковую сортировку здесь
-    for (count = 0; count < num_files - 1; count++)
+    for (int count = 0; count < num_files - 1; count++)
     {
-        for (j = count + 1; j < (num_files); j++)
+        for (int j = count + 1; j < (num_files); j++)
         {
             char *c = (char *)ptr[count];
             char *d = (char *)ptr[j];
@@ -521,11 +466,11 @@ int mx_no_flags(void)
             }
             else
             {
-                // если два начальных символа не принадлежат к 
+                // если два начальных символа не принадлежат к
                 // одному и тому же набору ASCII, сделайте их одинаковыми
                 // и затем сравните
                 int off_1 = 0, off_2 = 0;
-                
+
                 if (*c <= 90)
                 {
                     off_1 = 32;
@@ -537,7 +482,7 @@ int mx_no_flags(void)
 
                 int i = 0;
 
-                // После того, как набор символов будет таким же, проверьте, 
+                // После того, как набор символов будет таким же, проверьте,
                 // совпадают ли начальные символы. Если да, продолжайте поиск,
                 // пока не обнаружите разницу
                 if (*c + off_1 == *d + off_2)
@@ -561,7 +506,7 @@ int mx_no_flags(void)
     }
 
     // Теперь имена отсортированы по алфавиту. Начать вывод на консоль
-    for (count = 0; count < num_files; count++)
+    for (int count = 0; count < num_files; count++)
     {
         // Проверьте, является ли файл/папка исполняемым
         if (!file_exist((char *)ptr[count]))
@@ -571,7 +516,7 @@ int mx_no_flags(void)
 
             if (!opendir((char *)ptr[count]))
             {
-                perror("\n Opening file/Directory failed\n");
+                write(2, "Opening file/Directory failed\n", mx_strlen("Opening file/Directory failed\n"));
                 free(ptr);
                 return -1;
             }
@@ -579,35 +524,102 @@ int mx_no_flags(void)
             stat((char *)ptr[count], &st);
             if (S_ISDIR(st.st_mode))
             {
-                write(1, (char *)ptr[count], strlen((char *)ptr[count])); // здесь нужно поменять на свою strlen
-                write(1, " ", 1);
+                write(1, (char *)ptr[count], mx_strlen((char *)ptr[count]));
+                write(1, "\n", 1);
             }
             else
             {
-                write(1, (char *)ptr[count], strlen((char *)ptr[count])); // здесь нужно поменять на свою strlen
-                write(1, " ", 1);
+                write(1, (char *)ptr[count], mx_strlen((char *)ptr[count]));
+                write(1, "\n", 1);
             }
             close(fd);
         }
         else
         {
-            write(1, (char *)ptr[count], strlen((char *)ptr[count])); // здесь нужно поменять на свою strlen
-            write(1, " ", 1);
+            write(1, (char *)ptr[count], mx_strlen((char *)ptr[count]));
+            write(1, "\n", 1);
         }
     }
-    write(1, "\n", 2);
 
-    //Free the allocated memory
+    // Free the allocated memory
     free(ptr);
     return 0;
 }
 
 int main(int argc, char *argv[])
 {
+    char *flags = "ABCFGHLOPRSTUWabcdefghiklmnopqrstuwx1";
     if (argc > 1)
     {
-        //поменять на функцию сравнения строк
-        if (strcmp(argv[1], "-l") == 0)
+        if (mx_strstr(argv[1], "-") == 0)
+        {
+            char *curr_dir = NULL;
+            DIR *dp = NULL;
+            struct dirent *dptr = NULL;
+            struct winsize w;
+
+            ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+            curr_dir = "./";
+            
+            // Переменная для хранения количества файлов внутри каталога
+            dp = opendir((const char *)curr_dir);
+            int f = 0;
+
+            while ((dptr = readdir(dp)) != NULL)
+            {
+                // Не считайте файлы, начинающиеся с "."
+                if (dptr->d_name[0] != '.') {
+                    if (mx_strcmp(argv[1], dptr->d_name) == 0) {
+                        f = 1;
+                    }
+                }
+            }
+            closedir(dp);
+            if (f == 0) {
+                write (2, "uls: ", mx_strlen("uls: "));
+                write (2, argv[1], mx_strlen(argv[1]));
+                write (2, ": No such file or directory\n", mx_strlen(": No such file or directory\n"));
+                return -1;
+            }
+        }
+
+        char *s = malloc(argc * 2);
+
+        int i = 0, j = 0, fl = 0, c = 1, cc = 0;
+        while (c != argc)
+        {
+            mx_strcpy(&s[cc], argv[c]);
+            cc += 2;
+            c++;
+        }
+        char *s2 = malloc(mx_strlen(argv[1]));
+        while (s[i] != '\0')
+        {
+            if (s[i] != '-')
+            {
+                s2[j] = s[i];
+                for (int i = 0; i <= 38; i++)
+                {
+                    if (mx_strcmp(&s2[j], &flags[i]) == 0)
+                    {
+                        fl = 1;
+                    }
+                }
+                if (fl == 0)
+                {
+                    write(2, "uls: illegal option -- ", mx_strlen("uls: illegal option -- "));
+                    write(2, &s2[j], mx_strlen(&s2[j]));
+                    write(2, "\n", 1);
+                    write(2, "usage: uls [-ABCFGHLOPRSTUWabcdefghiklmnopqrstuwx1] [file ...]\n", mx_strlen("usage: uls [-ABCFGHLOPRSTUWabcdefghiklmnopqrstuwx1] [file ...]\n"));
+                    return -1;
+                }
+            }
+            fl = 0;
+            j++;
+            i++;
+        }
+
+        if (mx_strcmp(argv[1], "-l") == 0)
             mx_flag_l();
     }
     else if (argc == 1)
