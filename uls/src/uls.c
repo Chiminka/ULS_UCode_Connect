@@ -20,19 +20,19 @@ int mx_flag_l(void)
     struct winsize w;
 
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-    
+
     curr_dir = "./";
 
     if (NULL == curr_dir)
     {
-        perror("\n ERROR : Could not get the working directory\n");
+        write(2, "ERROR : Could not get the working directory\n", mx_strlen("ERROR : Could not get the working directory\n"));
         return -1;
     }
 
     int num_files = 0;
     dp = opendir((const char *)curr_dir);
 
-    while ((dptr = readdir(dp))!= NULL)
+    while ((dptr = readdir(dp)) != NULL)
     {
         if (dptr->d_name[0] != '.')
             num_files++;
@@ -51,7 +51,7 @@ int mx_flag_l(void)
         ptr = malloc(num_files * 8);
         if (NULL == ptr)
         {
-            perror("\n Memory allocation failed\n");
+            write(2, "Memory allocation failed\n", mx_strlen("Memory allocation failed\n"));
             return -1;
         }
         else
@@ -63,7 +63,7 @@ int mx_flag_l(void)
     dp = opendir((const char *)curr_dir);
     if (dp == NULL)
     {
-        perror("\n ERROR : Could not open the working directory\n");
+        write(2, "ERROR : Could not open the working directory\n", mx_strlen("ERROR : Could not open the working directory\n"));
         free(ptr);
         return -1;
     }
@@ -143,7 +143,7 @@ int mx_flag_l(void)
         if (stat((char *)ptr[count], &st))
         {
             // If stat() fails
-            perror("\n Stat() failed\n");
+            write(2, "Stat() failed\n", mx_strlen("Stat() failed\n"));
             free(ptr);
             return -1;
         }
@@ -211,12 +211,14 @@ int mx_flag_l(void)
         }
         else
         {
-            write(1, "-", 1);;
+            write(1, "-", 1);
+            ;
         }
 
         if (permission & S_IXGRP)
         {
-            write(1, "x", 1);;
+            write(1, "x", 1);
+            ;
         }
         else
         {
@@ -252,29 +254,46 @@ int mx_flag_l(void)
         }
         else
         {
-           write(1, "-", 1);
+            write(1, "-", 1);
         }
-////////////////////////////////////////////////////// поменять на принтинт
 
         // Вывести количество жестких ссылок
-        write(1, "  ", 2);
+        write(1, " ", 1);
         mx_printint((int)st.st_nlink);
         write(1, " ", 1);
 
         // Get the user name
         struct passwd *pt = getpwuid(st.st_uid);
         write(1, pt->pw_name, mx_strlen(pt->pw_name));
-        write(1, "  ", 2);
+        write(1, " ", 1);
 
         // Get the group name
         struct group *p = getgrgid(st.st_gid);
         write(1, p->gr_name, mx_strlen(p->gr_name));
-        write(1, "  ", 2);
+
+        /* int len = 0, tmp = 0;
+         int n = (long long)st.st_size;
+         if (n / 10 == 0) len = 1;
+         else
+         {
+             while (n > 0)
+             {
+                 n = n / 10;
+                 len += 1;
+             }
+         }
+
+         if (len > tmp) {
+             write(1, " ", 1);
+         }
+         else
+             write(1, "  ", 2);
+         tmp = len;*/
 
         // Get the file size
-        write(1, "   ", 2);
+        write(1, " ", 1);
         mx_printint((long long)st.st_size);
-        write(1, "  ", 2);
+        write(1, " ", 1);
 
         // Получение даты и времени
         // Обратите внимание, что здесь применяется некоторая логика
@@ -284,7 +303,7 @@ int mx_flag_l(void)
         mx_memset(date_time, 0, sizeof(date_time));
 
         mx_strncpy(date_time, ctime(&st.st_ctime), sizeof(date_time));
-        
+
         int c = 0;
         while (date_time[c] != '\0')
         {
@@ -299,19 +318,19 @@ int mx_flag_l(void)
         {
             if (S_ISDIR(st.st_mode))
             {
-                write (1, (char *)ptr[count], mx_strlen((char *)ptr[count]));
-                write (1, "\n", 2);       
+                write(1, (char *)ptr[count], mx_strlen((char *)ptr[count]));
+                write(1, "\n", 1);
             }
             else
             {
-                write (1, (char *)ptr[count], mx_strlen((char *)ptr[count]));
-                write (1, "\n", 2); 
+                write(1, (char *)ptr[count], mx_strlen((char *)ptr[count]));
+                write(1, "\n", 1);
             }
         }
         else
         {
-            write(1, (char *)ptr[count], mx_strlen((char *)ptr[count]));
-            write (1, "\n", 2); 
+            mx_printstr((char *)ptr[count]);
+            write(1, "\n", 1);
         }
     }
 
@@ -331,12 +350,12 @@ int mx_no_flags(void)
     //чтобы получить количество строк и столбцов, видимых на терминале
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
 
-    // Получите переменную среды PWD, чтобы получить текущий рабочий каталог
+    // Получить текущий рабочий каталог
     curr_dir = "./";
 
     if (NULL == curr_dir)
     {
-        perror("\n ERROR : Could not get the working directory\n");
+        write(2, "ERROR : Could not get the working directory\n", mx_strlen("ERROR : Could not get the working directory\n"));
         return -1;
     }
 
@@ -347,7 +366,7 @@ int mx_no_flags(void)
     dp = opendir((const char *)curr_dir);
 
     // Start reading the directory contents
-    while (NULL != (dptr = readdir(dp)))
+    while ((dptr = readdir(dp)) != NULL)
     {
         // Не считайте файлы, начинающиеся с "."
         if (dptr->d_name[0] != '.')
@@ -378,7 +397,7 @@ int mx_no_flags(void)
         ptr = malloc(num_files * 8);
         if (NULL == ptr)
         {
-            perror("\n Memory allocation failed\n");
+            write(2, "Memory allocation failed\n", mx_strlen("Memory allocation failed\n"));
             return -1;
         }
         else
@@ -393,7 +412,7 @@ int mx_no_flags(void)
 
     if (NULL == dp)
     {
-        perror("\n ERROR : Could not open the working directory\n");
+        write(2, "ERROR : Could not open the working directory\n", mx_strlen("ERROR : Could not open the working directory\n"));
         free(ptr);
         return -1;
     }
@@ -447,11 +466,11 @@ int mx_no_flags(void)
             }
             else
             {
-                // если два начальных символа не принадлежат к 
+                // если два начальных символа не принадлежат к
                 // одному и тому же набору ASCII, сделайте их одинаковыми
                 // и затем сравните
                 int off_1 = 0, off_2 = 0;
-                
+
                 if (*c <= 90)
                 {
                     off_1 = 32;
@@ -463,7 +482,7 @@ int mx_no_flags(void)
 
                 int i = 0;
 
-                // После того, как набор символов будет таким же, проверьте, 
+                // После того, как набор символов будет таким же, проверьте,
                 // совпадают ли начальные символы. Если да, продолжайте поиск,
                 // пока не обнаружите разницу
                 if (*c + off_1 == *d + off_2)
@@ -497,7 +516,7 @@ int mx_no_flags(void)
 
             if (!opendir((char *)ptr[count]))
             {
-                perror("\n Opening file/Directory failed\n");
+                write(2, "Opening file/Directory failed\n", mx_strlen("Opening file/Directory failed\n"));
                 free(ptr);
                 return -1;
             }
@@ -506,32 +525,130 @@ int mx_no_flags(void)
             if (S_ISDIR(st.st_mode))
             {
                 write(1, (char *)ptr[count], mx_strlen((char *)ptr[count]));
-                write(1, " ", 1);
+                write(1, "\n", 1);
             }
             else
             {
-                write(1, (char *)ptr[count], mx_strlen((char *)ptr[count])); 
-                write(1, " ", 1);
+                write(1, (char *)ptr[count], mx_strlen((char *)ptr[count]));
+                write(1, "\n", 1);
             }
             close(fd);
         }
         else
         {
             write(1, (char *)ptr[count], mx_strlen((char *)ptr[count]));
-            write(1, " ", 1);
+            write(1, "\n", 1);
         }
     }
-    write(1, "\n", 2);
 
-    //Free the allocated memory
+    // Free the allocated memory
     free(ptr);
     return 0;
 }
 
 int main(int argc, char *argv[])
 {
+    char *flags = "ABCFGHLOPRSTUWabcdefghiklmnopqrstuwx1";
     if (argc > 1)
     {
+        int count = 1;
+        int count2 = 0;
+        while (count != argc)
+        {
+            char *files[100];
+            if (mx_strstr(argv[count], "-") == 0)
+            {
+                char *curr_dir = NULL;
+                DIR *dp = NULL;
+                struct dirent *dptr = NULL;
+                struct winsize w;
+
+                ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+                curr_dir = "./";
+
+                // Переменная для хранения количества файлов внутри каталога
+                dp = opendir((const char *)curr_dir);
+                int f = 0;
+
+                while ((dptr = readdir(dp)) != NULL)
+                {
+                    // Не считайте файлы, начинающиеся с "."
+                    if (dptr->d_name[0] != '.')
+                    {
+                        if (mx_strcmp(argv[count], dptr->d_name) == 0)
+                        {
+                            f = 1;
+                        }
+                    }
+                }
+                closedir(dp);
+                if (f == 0)
+                {
+                    write(2, "uls: ", mx_strlen("uls: "));
+                    write(2, argv[count], mx_strlen(argv[count]));
+                    write(2, ": No such file or directory\n", mx_strlen(": No such file or directory\n"));
+                }
+                else
+                {
+                    struct stat st;
+
+                    stat(argv[count], &st);
+
+                    if (!S_ISDIR(st.st_mode))
+                    {
+                        mx_strcpy(*files, argv[count]);
+                        mx_strcpy(*files, " ");                        
+                    }
+                    else {
+                        /*dir into mas*/
+                    }         
+                }
+            }
+            count++;
+            if (count == argc) {
+                mx_printstr(*files);
+                return 0;
+            }
+        }
+
+        /*        write(1, argv[count], mx_strlen(argv[count]));
+            write(1, "\n", 1);*/
+        char *s = malloc(argc * 2);
+
+        int i = 0, j = 0, fl = 0, c = 1, cc = 0;
+        while (c != argc)
+        {
+            mx_strcpy(&s[cc], argv[c]);
+            cc += 2;
+            c++;
+        }
+        char *s2 = malloc(mx_strlen(argv[1]));
+        while (s[i] != '\0')
+        {
+            if (s[i] != '-')
+            {
+                s2[j] = s[i];
+                for (int i = 0; i <= 38; i++)
+                {
+                    if (mx_strcmp(&s2[j], &flags[i]) == 0)
+                    {
+                        fl = 1;
+                    }
+                }
+                if (fl == 0)
+                {
+                    write(2, "uls: illegal option -- ", mx_strlen("uls: illegal option -- "));
+                    write(2, &s2[j], mx_strlen(&s2[j]));
+                    write(2, "\n", 1);
+                    write(2, "usage: uls [-ABCFGHLOPRSTUWabcdefghiklmnopqrstuwx1] [file ...]\n", mx_strlen("usage: uls [-ABCFGHLOPRSTUWabcdefghiklmnopqrstuwx1] [file ...]\n"));
+                    return -1;
+                }
+            }
+            fl = 0;
+            j++;
+            i++;
+        }
+
         if (mx_strcmp(argv[1], "-l") == 0)
             mx_flag_l();
     }
