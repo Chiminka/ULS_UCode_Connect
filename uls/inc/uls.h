@@ -18,4 +18,9 @@
 
 #include "libmx.h"
 
+int mx_empty_dir(char *dptr);
+bool file_exist(char *name);
+int mx_flag_l(void);
+int mx_no_flags(void);
+
 #endif
