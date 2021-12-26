@@ -10,6 +10,16 @@ bool file_exist(char *name)
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+int mx_empty_dir(char *dptr)
+{
+    int files_found = 0;
+    if (mx_strcmp(dptr, ".") == 0 || mx_strcmp(dptr, "..") == 0)
+    {
+        files_found = 1;
+    }
+    return files_found;
+}
+
 int mx_flag_l(void)
 {
     char *curr_dir = NULL;
@@ -608,7 +618,7 @@ int main(int argc, char *argv[])
                         mx_strcat(files, argv[count]);
                         mx_strcat(files, " ");
                     }
-                     /*заносим названия папок в строку*/
+                    /*заносим названия папок в строку*/
                     else if (S_ISDIR(st.st_mode))
                     {
                         mx_strcat(dir, argv[count]);
@@ -664,7 +674,7 @@ int main(int argc, char *argv[])
             count++;
             if (count == argc)
             {
-/////////////////////////////////////////////////////////////////// здесь вывод всех файлов в текущей папке                
+                /////////////////////////////////////////////////////////////////// здесь вывод всех файлов в текущей папке
                 int i = 0;
                 while (files[i] != '\0')
                 {
@@ -677,8 +687,8 @@ int main(int argc, char *argv[])
                     if (files[i] != '\0')
                         write(1, " ", 1);
                 }
-                //mx_printchar('\n');
-//////////////////////////////////////////////////////////////////// здесь вывод содержимого указанных папок
+                mx_printchar('\n');
+                //////////////////////////////////////////////////////////////////// здесь вывод содержимого указанных папок
                 i = 0;
                 char *dir_name = malloc(len2);
                 int k = 0;
@@ -692,7 +702,7 @@ int main(int argc, char *argv[])
                         k++;
                     }
                     write(1, ":\n", 2);
-                    
+
                     char *curr_dir = NULL;
                     DIR *dp = NULL;
                     struct dirent *dptr = NULL;
@@ -703,15 +713,27 @@ int main(int argc, char *argv[])
 
                     // Переменная для хранения количества файлов внутри каталога
                     dp = opendir((const char *)curr_dir);
-
+                    int buf = 0;
                     while ((dptr = readdir(dp)) != NULL)
                     {
+                        char *str_dptr = malloc(mx_strlen(dptr->d_name) + 1);
+                        mx_strcpy(str_dptr, dptr->d_name);
+
+                        /*проверка на пустоту папок*/
+                        
+                        buf = mx_empty_dir(str_dptr);
                         // Не считайте файлы, начинающиеся с "."
                         if (dptr->d_name[0] != '.')
                         {
                             mx_printstr(dptr->d_name);
                             mx_printchar('\n');
                         }
+                    }
+                    if (buf != 0)
+                    {
+                        mx_printchar('\n');
+                        mx_printstr("# empty directory");
+                        mx_printchar('\n');
                     }
                     mx_printchar('\n');
                     k = 0;
@@ -725,7 +747,7 @@ int main(int argc, char *argv[])
             }
         }
     }
- ////////////////////////////////////////////// если просто "./uls "   
+    ////////////////////////////////////////////// если просто "./uls "
     else if (argc == 1)
     {
         mx_no_flags();
