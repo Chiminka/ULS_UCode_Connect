@@ -13,6 +13,7 @@ int main(int argc, char *argv[])
             len2 += mx_strlen(argv[count]);
             count++;
         }
+        
         char *files = malloc(len + 1);
         char *dir = malloc(len2 + 1);
         count = 1;
@@ -136,6 +137,7 @@ int main(int argc, char *argv[])
                 i = 0;
                 char *dir_name = malloc(len2);
                 int k = 0;
+                mx_printchar('\n');
                 while (dir[i] != '\0')
                 {
                     while (dir[i] != ' ')
@@ -183,9 +185,9 @@ int main(int argc, char *argv[])
                     k = 0;
                     closedir(dp);
                     i++;
+                    mx_memset(dir_name, 0, mx_strlen(dir_name));
                 }
                 free(files);
-                free(dir_name);
                 free(dir);
                 return 0;
             }
